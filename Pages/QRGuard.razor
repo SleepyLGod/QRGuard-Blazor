@@ -21,11 +21,21 @@
     }
 </p>
 
-<h2>@name</h2>
+
 @if(requested) {
-<div><img src="@qrcodePath" alt="QRCode"/></div>
+<div align="center">
+    <h2>@name</h2>
+    <a href = "@qrcodePath">
+    <img src="@qrcodePath" alt="QRCode" width=280 height=280/>
+    </a>
+    <p>@DateTime.Now</p>
+    <button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
+</div>
+}else{
+    <h2>@name</h2>
+    <button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
 }
-<button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
+
 
 @code {
     private string? name;
@@ -35,7 +45,7 @@
     private bool requested = false;
 
     private void qrCodeReq() {
-        System.Console.WriteLine("Clicked!");
+        if(string.IsNullOrWhiteSpace(name))return;
         requested = false;
         WriteBytesToFile($"./wwwroot/qrcode/{name}.jpg",GetBytesFromUrl($"http://localhost:11451/api/QRGuard/{name}/code"));
         qrcodePath = $"qrcode/{name}.jpg?time=${DateTime.Now.ToFileTime()}";
