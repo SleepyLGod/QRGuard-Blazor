@@ -1,32 +1,27 @@
-﻿@page "/qrguard"
+﻿@page "/qrguard/{authcipher}/{info}"
 
 @using System;
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using System.Net;
 @using System.IO;
+@using System.Security.Cryptography;
 @inject IHttpClientFactory ClientFactory
 
 
 <PageTitle>QRGuard</PageTitle>
 
-<h1>QRGuard</h1>
 
-<p>
-    @if(string.IsNullOrWhiteSpace(name)){
-        <div>请输入身份识别码：</div>
-    }
-    @if(!requested){
-        <input @bind="name" @bind:event="oninput"/>
-    }
-</p>
 
 
 @if(requested) {
 <div align="center">
-    <h2>@name</h2>
+    <h2>欢迎使用，@name。</h2>
+    @if(avatarPath != null){
+        <img src="@avatarPath" alt="avatar" width=50 height=50/>
+    }
     <a href = "@qrcodePath">
-    <img src="@qrcodePath" alt="QRCode" width=280 height=280/>
+    <img src="@qrcodePath" alt="QRCode" width=300 height=300/>
     </a>
     <p>@DateTime.Now</p>
     <button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
@@ -35,7 +30,8 @@
     <a href="https://github.com/HuXioAn"><p>by Huxiaoan with dotnet blazor</p></a>
 </div>
 }else{
-    <h2>@name</h2>
+    //请求失败显示
+    <h2>请求失败，请重试。</h2>
     <button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
 }
 
@@ -43,11 +39,39 @@
 
 
 @code {
-    private string? name;
+    [Parameter]
+    private string authCipher;
+
+    [Parameter]
+    private string info;
+
+    private string appId = "";
+
+    private string name;
+
+    private string avatarPath;
 
     private string? qrcodePath = null;
 
     private bool requested = false;
+
+    protected override void OnInitialized(){
+        //验证auth
+        var timeStamp = authCipher[0..13];
+        var sha2Verify = authCipher[13..];
+
+        var shaStr = $"aid:{appId};tm:{timeStamp}";
+        var sha1 = System.Security.Cryptography.SHA1.Create();
+
+        var shaRes = sha1.ComputHash(System.Text.Encoding.GetEncoding("UTF-8").GetBytes(shaStr));
+
+        if(sha2Verify == shaRes){
+            //pass
+            var p = info.find()
+        }else{
+            //fail
+        }
+    }
 
     private void qrCodeReq() {
         if(string.IsNullOrWhiteSpace(name))return;
