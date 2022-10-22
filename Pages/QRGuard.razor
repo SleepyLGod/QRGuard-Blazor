@@ -1,4 +1,4 @@
-﻿@page "/qrguard/{authcipher}/{info}"
+﻿@page "/qrguard/{authcipher}/{*infobase}"
 
 @using System;
 @using System.Text.Json
@@ -32,7 +32,6 @@
 }else{
     //请求失败显示
     <h2>请求失败，请重试。</h2>
-    <button class="btn btn-primary" @onclick="qrCodeReq">ReFresh QRCode</button>
 }
 
 
@@ -40,10 +39,10 @@
 
 @code {
     [Parameter]
-    private string authCipher;
+    public string authCipher{set;get;}
 
     [Parameter]
-    private string info;
+    public string infoBase{set;get;}
 
     private string appId = "";
 
@@ -56,20 +55,42 @@
     private bool requested = false;
 
     protected override void OnInitialized(){
+
+        //Console.WriteLine("Access");
         //验证auth
-        var timeStamp = authCipher[0..13];
-        var sha2Verify = authCipher[13..];
+        string timeStamp,sha2Verify;
+        try{
+            timeStamp = authCipher[0..13];
+            sha2Verify = authCipher[13..];
+            if(sha2Verify.Length != 40){
+                throw new Exception("Error sha length");
+            }
+        }catch{
+            return;
+        }
 
         var shaStr = $"aid:{appId};tm:{timeStamp}";
-        var sha1 = System.Security.Cryptography.SHA1.Create();
+        var sha1 = SHA1.Create();
 
-        var shaRes = sha1.ComputHash(System.Text.Encoding.GetEncoding("UTF-8").GetBytes(shaStr));
+        var shaRes = sha1.ComputeHash(System.Text.Encoding.GetEncoding("UTF-8").GetBytes(shaStr));
+        var shaResStr = BitConverter.ToString(shaRes).Replace("-","").ToLower();
 
-        if(sha2Verify == shaRes){
+        if(sha2Verify == shaResStr){
             //pass
-            var p = info.find()
+
+            var infoByte = Convert.FromBase64String(infoBase);
+            var info = System.Text.Encoding.UTF8.GetString(infoByte);
+
+            var p = info.IndexOf(";");
+            if(p == -1)return;
+
+            name = info[0..p];
+            avatarPath = info[(p+1)..];
+            qrCodeReq(); 
         }else{
             //fail
+            requested = false;
+            return;
         }
     }
 
