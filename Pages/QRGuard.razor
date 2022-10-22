@@ -16,7 +16,7 @@
 
 @if(requested) {
 <div align="center">
-    <h2>欢迎使用，@name。</h2>
+    <h2>欢迎使用，@nickName。</h2>
     @if(avatarPath != null){
         <img src="@avatarPath" alt="avatar" width=50 height=50/>
     }
@@ -45,6 +45,8 @@
     public string infoBase{set;get;}
 
     private string appId = "";
+
+    private string nickName;
 
     private string name;
 
@@ -84,8 +86,11 @@
             var p = info.IndexOf(";");
             if(p == -1)return;
 
-            name = info[0..p];
+            nickName = info[0..p];
             avatarPath = info[(p+1)..];
+            name = BitConverter.ToString(System.Text.Encoding.GetEncoding("UTF-8").GetBytes(nickName)).Replace("-","");
+            if(name.Length > 15)name = name[0..15];
+            Console.WriteLine(name);
             qrCodeReq(); 
         }else{
             //fail
